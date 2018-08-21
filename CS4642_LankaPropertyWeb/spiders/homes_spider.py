@@ -14,12 +14,23 @@ class HomesSpider(scrapy.Spider):
 		if next_page is not None:
 			yield response.follow(next_page,callback=self.parse)
 
+	@staticmethod
+	def get_int_val(str_):
+		values=[int(s) for s in str_.split() if s.isdigit()]
+		if len(values)>0:
+			return values[0]
+		else:
+			return None
 
 	def parse_item_page(self,response):
 
 		pricestr=response.css('div.price-detail::text').extract_first().strip().replace(",","")
-		price=[int(s) for s in pricestr.split() if s.isdigit()][0]
+		price=self.get_int_val(pricestr)
 
+		floor_areastr=response.css('tr').extract()[3].split('<tr>\n<td class="left">Floor area:</td>\n<td class="right">')[1].split('</td>\n</tr>')[0]
+		floor_area=self.get_int_val(floor_areastr)
+		if type(floor_area)==str:
+			print("*"*100)
 		yield{
 			'title':response.css('div.details-heading.details-property h1::text').extract_first(),
 			'location':response.css('span.details-location::text').extract_first(),
@@ -29,7 +40,7 @@ class HomesSpider(scrapy.Spider):
 			'property_type': response.css('tr').extract()[0].split('<tr>\n<td class="left">Property Type:</td>\n<td class="right">')[1].split('</td>\n</tr>')[0],
 			'bedrooms':response.css('tr').extract()[1].split('<tr>\n<td class="left">Bedrooms:</td>\n<td class="right">')[1].split('</td>\n</tr>')[0],
 			'bathrooms/WCs':response.css('tr').extract()[2].split('<tr>\n<td class="left">Bathrooms/WCs:</td>\n<td class="right">')[1].split('</td>\n</tr>')[0],
-			'floor_area':response.css('tr').extract()[3].split('<tr>\n<td class="left">Floor area:</td>\n<td class="right">')[1].split('</td>\n</tr>')[0],
+			'floor_area':floor_area,
 			'no_of_floors':response.css('tr').extract()[4].split('<tr>\n<td class="left">No. of floors:</td>\n<td class="right">')[1].split('</td>\n</tr>')[0],
 			'area_of_land':response.css('tr').extract()[5].split('<tr>\n<td class="left">Area of land:</td>\n<td class="right">')[1].split('</td>\n</tr>')[0],
 			'availability':response.css('tr').extract()[6].split('<tr>\n<td class="left">Availability:</td>\n<td class="right">\n<font color="black"><b>')[1].split('</b></font> </td>\n</tr>')[0],
